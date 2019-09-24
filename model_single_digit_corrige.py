@@ -23,6 +23,7 @@ from keras.optimizers import Adam
 
 import matplotlib.pyplot as plt
 from PIL import Image
+import pickle
 
 from keras.models import load_model
 
@@ -148,26 +149,36 @@ correct_preds = sum( pred_list == y_test)
 print('exact accuracy', correct_preds / len(y_pred))
 
 #%%
-def model_prediction(image_list,model = "model.single_digit_fulltrain"):
-    model = model.load(model)
+def model_prediction(image_list, model_file = "model.single_digit_fulltrain"):
     temp = []
     for img in image_list:
         img.resize((100,256))
         img = img.reshape((img.shape[0],img.shape[1],1))
         temp.append(img)
     X_test = np.asarray(temp)
+    
+    if model_file.endswith(".sav"):
+        model = pickle.load(open(model_file,'rb'))
+    else:
+        model = model.load(model_file)
+    
     y_pred = model.predict(X_test)
     return [np.argmax(y_pred[i]) for i in range(len(y_pred))]
 
-def calc_accuracy(dic, model = "model.single_digit_fulltrain"):
+def calc_accuracy(dic, model_file = "model.single_digit_fulltrain"):
     correct_preds = 0
     n = len(dic)
-    model = model.load(model)
+    if model_file.endswith(".sav"):
+        model = pickle.load(open(model_file,'rb'))
+    else:
+        model = model.load(model_file)
     for img,label in dic.items():
         img.resize((100,256))
         img = img.reshape((img.shape[0],img.shape[1],1))
         test = np.asarray(img)
-        pred = np.argmax(model.predict(test))
+        pred = model.predict(test)
+        if not model_file.endswith(".sav"):
+            pred = np.argmax(pred)
         correct_preds += (label == pred)
     print('exact accuracy', correct_preds /n)
     
